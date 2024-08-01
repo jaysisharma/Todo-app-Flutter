@@ -108,7 +108,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       User? updatedUser = FirebaseAuth.instance.currentUser;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully')),
+        const SnackBar(content: Text('Profile updated successfully')),
       );
 
       if (updatedUser != null) {

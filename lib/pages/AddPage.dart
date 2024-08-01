@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_app/pages/TaskCategory.dart';
 import 'package:todo_app/utils/Shared_Pref.dart';
 
