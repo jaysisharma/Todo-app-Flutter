@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_app/pages/TaskCategory.dart';
+import 'package:todo_app/utils/Shared_Pref.dart';
 
-class AddTask extends StatelessWidget {
+class AddTask extends StatefulWidget {
   const AddTask({super.key});
+
+  @override
+  State<AddTask> createState() => _AddTaskState();
+}
+
+class _AddTaskState extends State<AddTask> {
+  TextEditingController titleController = TextEditingController();
+  TextEditingController descController = TextEditingController();
+
+
+  void addTask() async{
+    await SharedPref.saveTodo(titleController.text,descController.text);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text("Add Task"),
+        title: const Text("Add Task"),
       ),
       body: SingleChildScrollView(
-        physics: NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(18.0),
           child: Column(
@@ -21,7 +36,8 @@ class AddTask extends StatelessWidget {
               Container(
                 height: 40,
                 width: MediaQuery.of(context).size.width,
-                child: const TextField(
+                child:  TextField(
+                  controller: titleController,
                   decoration: InputDecoration(
                       border: InputBorder.none, hintText: "Enter your Task"),
                 ),
@@ -29,9 +45,10 @@ class AddTask extends StatelessWidget {
               SingleChildScrollView(
                 child: Container(
                   width: MediaQuery.of(context).size.width,
-                  child: const TextField(
-                     maxLines: 25,
-                    decoration: InputDecoration(
+                  child:  TextField(
+                    controller: descController,
+                    maxLines: 25,
+                    decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: "Task Description......",
                         hintStyle: TextStyle(fontSize: 14)),
@@ -50,9 +67,13 @@ class AddTask extends StatelessWidget {
             backgroundColor: Colors.blue,
             foregroundColor: Colors.white,
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context)=> TaskCategory()));
+              print(titleController.text);
+              print(descController.text);
+              addTask();
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const TaskCategory()));
             },
-            child: Text("Add Task"),
+            child: const Text("Add Task"),
           ),
         ),
       ),

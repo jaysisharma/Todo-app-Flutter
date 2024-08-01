@@ -1,13 +1,13 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:todo_app/components/Drawer.dart';
 import 'package:todo_app/components/FlexTextfield.dart';
 import 'package:todo_app/components/TaskBox.dart';
 import 'package:todo_app/components/TaskProgress.dart';
 import 'package:todo_app/pages/AddPage.dart';
 import 'package:todo_app/providers/theme_provider.dart';
+import 'package:todo_app/utils/Shared_Pref.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -20,11 +20,13 @@ class _MainPageState extends State<MainPage> {
   double progress = 10;
   Timer? _timer;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late Future<List<Map<String, dynamic>>> _todoListFuture;
 
   @override
   void initState() {
     super.initState();
     _checkProgress();
+    _refreshTodoList(); // Initialize the Future
   }
 
   void _checkProgress() {
@@ -39,6 +41,17 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  Future<void> _refreshTodoList() async {
+    setState(() {
+      _todoListFuture = SharedPref.getTodoList();
+    });
+  }
+
+  Future<void> _deleteTodo(String todoTitle) async {
+    await SharedPref.removeTodoByTitle(todoTitle);
+    _refreshTodoList(); // Refresh the list after deletion
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -46,36 +59,10 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: _AppBar(),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            SizedBox(
-              height: 150,
-              child: Container(
-                color: Colors.red,
-                child: const Center(
-                  child: Text(
-                    'Header',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
-                ),
-              ),
-            ),
-            ListTile(
-              title: const Text('Switch Theme'),
-              onTap: () {
-                Navigator.of(context).pop(); // Close the drawer
-                themeProvider.switchTheme(); // Switch the theme
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: MyDrawer(themeProvider: themeProvider),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(
-              16.0), // Add padding to avoid content touching edges
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -95,124 +82,110 @@ class _MainPageState extends State<MainPage> {
                 "Urgent Tasks",
                 style: TextStyle(fontSize: 25, fontWeight: FontWeight.w400),
               ),
-              
-               Padding(
-                 padding: const EdgeInsets.all(8.0),
-                 child: Container(height: 80,width: MediaQuery.of(context).size.width,
-                 decoration: BoxDecoration(
-                color: const Color.fromRGBO(35, 34, 40, 1),
-                   borderRadius: BorderRadius.circular(18)
-                 ),
-                 child:const  Padding(
-                   padding: EdgeInsets.all(18.0),
-                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CircleAvatar(
-                        child: Text("20"),
-                      ),
-                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                         children: [
-                           Text("Write a Post on Linkedin"),
-                           Text("7 PM, 24 March", style: TextStyle(fontSize: 10, color: Colors.grey),)
-                         ],
-                       ),
-                       Text("Left")
-                    ],
-                   ),
-                 ),
-                 ),
-               ),
-               Padding(
-                 padding: const EdgeInsets.all(8.0),
-                 child: Container(height: 80,width: MediaQuery.of(context).size.width,
-                 decoration: BoxDecoration(
-                color: const Color.fromRGBO(35, 34, 40, 1),
-                   borderRadius: BorderRadius.circular(18)
-                 ),
-                 child: const Padding(
-                   padding: EdgeInsets.all(18.0),
-                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CircleAvatar(
-                        child: Text("20"),
-                      ),
-                       Text("Write a Post on Linkedin"),
-                       Text("Left")
-                    ],
-                   ),
-                 ),
-                 ),
-               ),
-               Padding(
-                 padding: const EdgeInsets.all(8.0),
-                 child: Container(height: 80,width: MediaQuery.of(context).size.width,
-                 decoration: BoxDecoration(
-                color: const Color.fromRGBO(35, 34, 40, 1),
-                   borderRadius: BorderRadius.circular(18)
-                 ),
-                 child: const Padding(
-                   padding: EdgeInsets.all(18.0),
-                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CircleAvatar(
-                        child: Text("20"),
-                      ),
-                       Text("Write a Post on Linkedin"),
-                       Text("Left")
-                    ],
-                   ),
-                 ),
-                 ),
-               )
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: _todoListFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No to-dos found'));
+                  } else {
+                    final todos = snapshot.data!;
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(8.0),
+                      shrinkWrap: true,
+                      itemCount: todos.length,
+                      itemBuilder: (context, index) {
+                        final todo = todos[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Container(
+                            height: 80,
+                            width: MediaQuery.of(context).size.width,
+                            decoration: BoxDecoration(
+                              color: const Color.fromRGBO(35, 34, 40, 1),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(18.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  CircleAvatar(
+                                    child: Text(
+                                        '20'), // Placeholder for dynamic content
+                                  ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        todo['title'] ?? 'No title',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        todo['desc'] ?? 'No description',
+                                        style: TextStyle(
+                                            fontSize: 10, color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    onPressed: () {
+                                      _deleteTodo(todo['title'] ??
+                                          ''); // Trigger delete
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
             ],
           ),
         ),
       ),
-       floatingActionButton: Container(
-        width: MediaQuery.of(context).size.width - 80,
-         child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context)=> AddTask()));
-          },
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Add Task",
-                style: TextStyle(fontSize: 16), // Adjust font size if needed
-              ),
-              Icon(Icons.add), // Icon for the button
-              SizedBox(width: 8), // Space between the icon and text
-            ],
-          ),
-               ),
-       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked, // Default location
-   
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddTask()),
+          );
+        },
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text("Add Task"),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  _AppBar() {
+  AppBar _AppBar() {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.dashboard),
         onPressed: () {
-          _scaffoldKey.currentState
-              ?.openDrawer(); // Use the key to open the drawer
+          _scaffoldKey.currentState?.openDrawer();
         },
       ),
       actions: const [
         Padding(
           padding: EdgeInsets.all(18.0),
           child: Icon(Icons.notifications),
-        )
+        ),
       ],
     );
   }

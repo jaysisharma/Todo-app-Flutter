@@ -5,9 +5,8 @@ final ThemeData lightTheme = ThemeData(
   primarySwatch: Colors.blue,
   colorScheme: ColorScheme.light(
     primary: Colors.blue,
-    secondary: Colors.amber, // This replaces the old accentColor
+    secondary: Colors.amber,
   ),
-  // Add other theme properties as needed
 );
 
 final ThemeData darkTheme = ThemeData(
@@ -15,7 +14,6 @@ final ThemeData darkTheme = ThemeData(
   primarySwatch: Colors.blueGrey,
   colorScheme: ColorScheme.dark(
     primary: Colors.blueGrey,
-    secondary: Colors.deepOrange, // This replaces the old accentColor
+    secondary: Colors.deepOrange, 
   ),
-  // Add other theme properties as needed
 );

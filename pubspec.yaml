@@ -44,10 +44,14 @@ dependencies:
   firebase_auth: ^5.1.2
   google_sign_in: ^6.2.1
 
-flutter_icons:
+
+flutter_native_splash:
   android: true
   ios: true
-  image_path: "assets/icon/app_icon.png" 
+  web: false
+
+color: "#FFCC00"
+
 
 dev_dependencies:
   flutter_test:
