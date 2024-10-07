@@ -14,6 +14,6 @@ final ThemeData darkTheme = ThemeData(
   primarySwatch: Colors.blueGrey,
   colorScheme: ColorScheme.dark(
     primary: Colors.blueGrey,
-    secondary: Colors.deepOrange, 
+    secondary: Colors.deepOrange,
   ),
 );
